@@ -69,7 +69,7 @@ def train(**kwargs):
 
     optim_policy = model.get_optim_policy()
     if use_gpu:
-        model = model.gpu()
+        model = nn.DataParallel(model).cuda()
     reid_evaluator = ResNetEvaluator(model)
 
     if opt.evaluate:
