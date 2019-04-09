@@ -11,12 +11,12 @@ class DefaultConfig(object):
     use_all = False
     # optimization options
     loss = 'softmax'  # triplet, softmax_triplet
-    optim = 'sgd'
-    max_epoch = 60
+    optim = 'Adam'
+    max_epoch = 120
     train_batch = 64 
     test_batch = 64
     adjust_lr = False # warmup
-    lr = 0.05
+    lr = 0.005
     margin = None
     num_instances = 4
     num_gpu = 1
@@ -25,7 +25,7 @@ class DefaultConfig(object):
     re_ranking = False
 
     # model options
-    last_stride = 2
+    last_stride = 1
     pretrained_model = None
     
     # miscs

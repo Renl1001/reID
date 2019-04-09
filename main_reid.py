@@ -140,14 +140,26 @@ def train(**kwargs):
 
     print('Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
 
+def train_collate_fn(batch):
+    imgs, pids, _, _, = batch
+    pids = torch.tensor(pids, dtype=torch.int64)
+    return torch.stack(imgs, dim=0), pids
+
 def load_data(dataset, pin_memory):
     dataloader = {}
-    trainloader = DataLoader(
-        ImageData(dataset.train, TrainTransform()),
-        sampler=RandomIdentitySampler(dataset.train, opt.num_instances),
-        batch_size=opt.train_batch, num_workers=8,
-        pin_memory=pin_memory, drop_last=True
-    )
+    if opt.loss == 'softmax':
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform()),
+            shuffle=True, num_workers=8,
+            collate_fn=train_collate_fn
+        )
+    else:
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform()),
+            sampler=RandomIdentitySampler(dataset.train, opt.num_instances),
+            batch_size=opt.train_batch, num_workers=8,
+            pin_memory=pin_memory, drop_last=True
+        )
     dataloader['train'] = trainloader
     queryloader = DataLoader(
         ImageData(dataset.query, TestTransform()),
