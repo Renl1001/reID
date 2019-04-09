@@ -67,8 +67,9 @@ def train(**kwargs):
         
     print('model size: {:.5f}M'.format(sum(p.numel() for p in model.parameters()) / 1e6))
 
+    optim_policy = model.get_optim_policy()
     if use_gpu:
-        model = nn.DataParallel(model).cuda()
+        model = model.gpu()
     reid_evaluator = ResNetEvaluator(model)
 
     if opt.evaluate:
@@ -80,7 +81,7 @@ def train(**kwargs):
     
 
     # get optimizer
-    optim_policy = model.get_optim_policy()
+    
     if opt.optim == "sgd":
         optimizer = torch.optim.SGD(optim_policy, lr=opt.lr, momentum=0.9, weight_decay=5e-4)
     else:
