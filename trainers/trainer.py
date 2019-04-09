@@ -30,12 +30,11 @@ class cls_tripletTrainer:
         self.cnt = 0
         for i, inputs in enumerate(data_loader):
             data_time.update(time.time() - start)
-
             # model optimizer
             self._parse_data(inputs)
             self.optimizer.zero_grad()
             self._forward()
-            self._backward()
+            self.loss.backward()
             self.optimizer.step()
 
             self.corrects += float(torch.sum(self.preds == self.target.data))
@@ -80,6 +79,3 @@ class cls_tripletTrainer:
         _, preds = torch.max(score.data, 1)
         self.loss = self.criterion(feat, score, self.target)
         self.preds = preds
-
-    def _backward(self):
-        self.loss.backward()

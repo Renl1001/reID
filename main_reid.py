@@ -19,9 +19,10 @@ from torchvision.datasets import ImageFolder
 from models.networks import ResNetBuilder
 from trainers.evaluator import ResNetEvaluator
 from trainers.trainer import cls_tripletTrainer
-from utils.loss import CrossEntropyLabelSmooth, TripletLoss
+from utils.loss import TripletLoss
 from utils.serialization import Logger, save_checkpoint
 from utils.transforms import TestTransform, TrainTransform
+from utils.lr_scheduler import WarmupMultiStepLR
 
 
 def train(**kwargs):
@@ -56,7 +57,6 @@ def train(**kwargs):
     elif opt.loss == 'triplet':
         model = ResNetBuilder(None, opt.last_stride, True)
     
-    optim_policy = model.get_optim_policy()
 
     if opt.pretrained_model:
         state_dict = torch.load(opt.pretrained_model)['state_dict']
@@ -76,24 +76,18 @@ def train(**kwargs):
             dataloader['queryFlip'], dataloader['galleryFlip'], re_ranking=opt.re_ranking, savefig=opt.savefig)
         return
 
-    xent_criterion = nn.CrossEntropyLoss()
-    # xent_criterion = CrossEntropyLabelSmooth(dataset.num_train_pids, use_gpu=use_gpu)
-
+    criterion = get_loss()
     
 
-    def criterion(feat, score, labels):
-        loss = xent_criterion(score, labels)
-        if opt.loss == 'triplet' or opt.loss == 'softmax_triplet':
-            embedding_criterion = TripletLoss(opt.margin)
-            loss += embedding_criterion(feat, labels)[0]
-        return loss
-
     # get optimizer
+    optim_policy = model.get_optim_policy()
     if opt.optim == "sgd":
         optimizer = torch.optim.SGD(optim_policy, lr=opt.lr, momentum=0.9, weight_decay=5e-4)
     else:
         optimizer = torch.optim.Adam(optim_policy, lr=opt.lr, weight_decay=5e-4)
 
+    scheduler = WarmupMultiStepLR(optimizer, [40, 70], 0.1, 0.01,
+                                  10, 'linear')
 
     start_epoch = opt.start_epoch
     # get trainer and evaluator
@@ -117,6 +111,7 @@ def train(**kwargs):
     for epoch in range(start_epoch, opt.max_epoch):
         if opt.adjust_lr:
             adjust_lr(optimizer, epoch + 1)
+        scheduler.step()
 
         reid_trainer.train(epoch, dataloader['train'])
 
@@ -140,26 +135,29 @@ def train(**kwargs):
 
     print('Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
 
-def train_collate_fn(batch):
-    imgs, pids, _, _, = zip(*batch)
-    pids = torch.tensor(pids, dtype=torch.int64)
-    return torch.stack(imgs, dim=0), pids
+def get_loss():
+    xent_criterion = nn.CrossEntropyLoss()
+    triplet = TripletLoss(opt.margin)
+    if opt.loss == 'softmax':
+        def criterion(feat, score, labels):
+            return xent_criterion(score, labels)
+    elif opt.loss == 'triplet':
+        def criterion(feat, score, labels):
+            return triplet(feat, labels)[0]
+    else:
+        def criterion(feat, score, labels):
+            return xent_criterion(score, labels)+triplet(feat, labels)[0]
+    
+    return criterion
 
 def load_data(dataset, pin_memory):
     dataloader = {}
-    if opt.loss == 'softmax':
-        trainloader = DataLoader(
-            ImageData(dataset.train, TrainTransform()),
-            shuffle=True, num_workers=8,
-            collate_fn=train_collate_fn
-        )
-    else:
-        trainloader = DataLoader(
-            ImageData(dataset.train, TrainTransform()),
-            sampler=RandomIdentitySampler(dataset.train, opt.num_instances),
-            batch_size=opt.train_batch, num_workers=8,
-            pin_memory=pin_memory, drop_last=True
-        )
+    trainloader = DataLoader(
+        ImageData(dataset.train, TrainTransform()),
+        sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+        batch_size=opt.train_batch, num_workers=8,
+        pin_memory=pin_memory, drop_last=True
+    )
     dataloader['train'] = trainloader
     queryloader = DataLoader(
         ImageData(dataset.query, TestTransform()),

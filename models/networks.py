@@ -61,14 +61,13 @@ class ResNetBuilder(nn.Module):
         x = self.base.layer3(x)
         x = self.base.layer4(x)
         x = self.base.avgpool(x)
-        # global_feat = x.view(x.shape[0], -1)
         global_feat = x.view(x.size(0), x.size(1))
+        feat = self.bottleneck(global_feat)
         if self.training and self.num_classes is not None:
-            feat = self.bottleneck(global_feat)
             cls_score = self.classifier(feat)
             return global_feat, cls_score
         else:
-            return global_feat
+            return feat
 
     def get_optim_policy(self):
         base_param_group = self.base.parameters()
