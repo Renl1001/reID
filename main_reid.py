@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from config import opt
 from datasets import data_manager
 from datasets.data_loader import ImageData
-from datasets.samplers import RandomIdentitySampler
+from datasets.samplers import RandomIdentitySampler, RandomIdentitySampler_alignedreid
 from torchvision.datasets import ImageFolder
 from models.networks import ResNetBuilder
 from trainers.evaluator import ResNetEvaluator
@@ -69,7 +69,7 @@ def train(**kwargs):
 
     optim_policy = model.get_optim_policy()
     if use_gpu:
-        model = nn.DataParallel(model).cuda()
+        model = model.cuda()
     reid_evaluator = ResNetEvaluator(model)
 
     if opt.evaluate:
@@ -87,8 +87,8 @@ def train(**kwargs):
     else:
         optimizer = torch.optim.Adam(optim_policy, lr=opt.lr, weight_decay=5e-4)
 
-    scheduler = WarmupMultiStepLR(optimizer, [40, 70], 0.1, 0.01,
-                                  10, 'linear')
+    # scheduler = WarmupMultiStepLR(optimizer, [40, 70], 0.1, 0.01,
+    #                               10, 'linear')
 
     start_epoch = opt.start_epoch
     # get trainer and evaluator
@@ -112,7 +112,7 @@ def train(**kwargs):
     for epoch in range(start_epoch, opt.max_epoch):
         if opt.adjust_lr:
             adjust_lr(optimizer, epoch + 1)
-        scheduler.step()
+        # scheduler.step()
 
         reid_trainer.train(epoch, dataloader['train'])
 
@@ -155,7 +155,8 @@ def load_data(dataset, pin_memory):
     dataloader = {}
     trainloader = DataLoader(
         ImageData(dataset.train, TrainTransform()),
-        sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+        # sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+        sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
         batch_size=opt.train_batch, num_workers=8,
         pin_memory=pin_memory, drop_last=True
     )
