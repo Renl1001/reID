@@ -153,8 +153,8 @@ def load_data(dataset, pin_memory):
     dataloader = {}
     trainloader = DataLoader(
         ImageData(dataset.train, TrainTransform()),
-        # sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
-        sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
+        sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+        # sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
         batch_size=opt.train_batch, num_workers=8,
         pin_memory=pin_memory, drop_last=True
     )
