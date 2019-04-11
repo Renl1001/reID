@@ -5,6 +5,7 @@ import itertools
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.utils.model_zoo as model_zoo
 import random
 from torch import nn, optim
 from torchvision import transforms,models
@@ -52,16 +53,9 @@ class ResNetBuilder(nn.Module):
             self.classifier.apply(weights_init_classifier)
 
     def forward(self, x):
-        x = self.base.conv1(x)
-        x = self.base.bn1(x)
-        x = self.base.relu(x)
-        x = self.base.maxpool(x)
-        x = self.base.layer1(x)
-        x = self.base.layer2(x)
-        x = self.base.layer3(x)
-        x = self.base.layer4(x)
-        x = self.base.avgpool(x)
-        global_feat = x.view(x.size(0), x.size(1))
+        global_feat = self.base(x)
+        global_feat = F.avg_pool2d(global_feat, global_feat.shape[2:])  # (b, 2048, 1, 1)
+        global_feat = global_feat.view(global_feat.shape[0], -1)
         if self.training and self.num_classes is not None:
             feat = self.bottleneck(global_feat)
             cls_score = self.classifier(feat)
