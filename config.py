@@ -17,7 +17,7 @@ class DefaultConfig(object):
     test_batch = 64
     adjust_lr = False # warmup
     lr = 0.005
-    margin = 0.3
+    margin = None # 0.3
     num_instances = 4
     num_gpu = 1
     evaluate = False

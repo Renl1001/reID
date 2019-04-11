@@ -32,8 +32,8 @@ class cls_tripletTrainer:
             data_time.update(time.time() - start)
             # model optimizer
             self._parse_data(inputs)
-            self.optimizer.zero_grad()
             self._forward()
+            self.optimizer.zero_grad()
             self.loss.backward()
             self.optimizer.step()
 
