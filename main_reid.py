@@ -151,13 +151,22 @@ def get_loss():
 
 def load_data(dataset, pin_memory):
     dataloader = {}
-    trainloader = DataLoader(
-        ImageData(dataset.train, TrainTransform()),
-        # sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
-        sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
-        batch_size=opt.train_batch, num_workers=8,
-        pin_memory=pin_memory, drop_last=True
-    )
+    if opt.alignedreid:
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform()),
+            # sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+            sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
+            batch_size=opt.train_batch, num_workers=8,
+            pin_memory=pin_memory, drop_last=True
+        )
+    else:
+        trainloader = DataLoader(
+            ImageData(dataset.train, TrainTransform()),
+            sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
+            # sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
+            batch_size=opt.train_batch, num_workers=8,
+            pin_memory=pin_memory, drop_last=True
+        )
     dataloader['train'] = trainloader
     queryloader = DataLoader(
         ImageData(dataset.query, TestTransform()),
