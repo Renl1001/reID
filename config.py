@@ -9,6 +9,7 @@ class DefaultConfig(object):
     # dataset options
     dataset = 'market1501'
     use_all = False
+    data_aug = 'RandomErase'
     # optimization options
     loss = 'softmax'  # triplet, softmax_triplet
     optim = 'Adam'
