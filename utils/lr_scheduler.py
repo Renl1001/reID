@@ -5,6 +5,7 @@
 """
 from bisect import bisect_right
 import torch
+from torch import nn
 
 
 # FIXME ideally this would be achieved with a CombinedLRScheduler,
@@ -54,3 +55,24 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
             * self.gamma ** bisect_right(self.milestones, self.last_epoch)
             for base_lr in self.base_lrs
         ]
+
+def make_optimizer(model):
+    params = []
+    for key, value in model.named_parameters():
+        if not value.requires_grad:
+            continue
+        lr = 0.00035
+        weight_decay = 5e-4
+        params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
+
+    optimizer = getattr(torch.optim, "Adam")(params)
+    return optimizer
+
+if __name__ == "__main__":
+    net = nn.Linear(10, 10)
+    optimizer = make_optimizer(net)
+    scheduler = WarmupMultiStepLR(optimizer, [40, 70], 0.1, 0.01, 10, 'linear')
+    for i in range(120):
+        scheduler.step()
+        print('{}:{}'.format(i+1, scheduler.get_lr()[0]))
+        
