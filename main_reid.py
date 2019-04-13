@@ -94,24 +94,11 @@ def train(**kwargs):
     # get trainer and evaluator
     reid_trainer = cls_tripletTrainer(opt, model, optimizer, criterion, summary_writer)
 
-    def adjust_lr(optimizer, ep):
-        if ep < 50:
-            lr = 1e-4*(ep//5+1)
-        elif ep < 200:
-            lr = 1e-3
-        elif ep < 300:
-            lr = 1e-4
-        else:
-            lr = 1e-5
-        for p in optimizer.param_groups:
-            p['lr'] = lr
 
     # start training
     best_rank1 = opt.best_rank
     best_epoch = 0
     for epoch in range(start_epoch, opt.max_epoch):
-        if opt.adjust_lr:
-            adjust_lr(optimizer, epoch + 1)
         scheduler.step()
 
         reid_trainer.train(epoch, dataloader['train'])
