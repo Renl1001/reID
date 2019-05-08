@@ -77,9 +77,9 @@ class ResNetEvaluator:
             gallery_index = indices[i][j]
             img = galleryloader.dataset.dataset[gallery_index][0]
             img = Image.open(img).convert('RGB')
-            axes[k+1].set_title(g_pids[gallery_index])
-            axes[k+1].set_axis_off()
-            axes[k+1].imshow(img)
+            axes[j+1].set_title(g_pids[gallery_index])
+            axes[j+1].set_axis_off()
+            axes[j+1].imshow(img)
         fig.savefig(os.path.join(savefig, '%d.png' % q_pids[i]))
         plt.close(fig)
 
