@@ -21,13 +21,15 @@ class DefaultConfig(object):
     margin = 0.3
     num_instances = 4
     num_gpu = 1
+
+    # eval
     evaluate = False
-    savefig = None 
-    re_ranking = False
+    savefig = None #./save 
+    loadfig = None #
 
     # model options
     last_stride = 1
-    pretrained_model = None
+    pretrained_model = None #./pytorch-ckpt/market
     
     # miscs
     print_freq = 10
