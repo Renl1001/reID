@@ -47,7 +47,7 @@ class ResNetEvaluator:
 
     def test(self, queryloader, galleryloader, savefig, i):
         print('loading...')
-        distmat = np.load(os.path.join(savefig, 'save.npy'))
+        distmat = np.load(os.path.join(savefig, 'distmat.npy'))
         print('load q')
         q_pids = np.load(os.path.join(savefig, 'q_pids.npy'))
         q_camids = np.load(os.path.join(savefig, 'q_camids.npy'))
