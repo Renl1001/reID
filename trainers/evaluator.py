@@ -44,6 +44,7 @@ class ResNetEvaluator:
 
     def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False, loadfig = False):
         if loadfig:
+            print('loading...')
             distmat = np.load(os.path.join(savefig, 'save.npy'))
             q_pids, q_camids = [], []
             for inputs0, inputs1 in zip(queryloader, queryFliploader):
@@ -59,13 +60,12 @@ class ResNetEvaluator:
             g_pids, g_camids = [], []
             for inputs0, inputs1 in zip(galleryloader, galleryFliploader):
                 _, pids, camids = self._parse_data(inputs0)
-                if eval_flip:
-                    _, pids, camids = self._parse_data(inputs1)
                     
                 g_pids.extend(pids)
                 g_camids.extend(camids)
             g_pids = torch.Tensor(g_pids)
             g_camids = torch.Tensor(g_camids)
+            print('111')
         else:
             self.model.eval()
             qf, q_pids, q_camids = [], [], []
@@ -114,10 +114,11 @@ class ResNetEvaluator:
             q_g_dist.addmm_(1, -2, qf, gf.t())
 
             distmat = q_g_dist 
+            distmat = distmat.numpy()
 
         if savefig:
             print("Saving fingure")
-            self.save_incorrect_pairs(distmat.numpy(), queryloader, galleryloader, 
+            self.save_incorrect_pairs(distmat, queryloader, galleryloader, 
                 g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig, loadfig)
 
         print("Computing CMC and mAP")
