@@ -9,7 +9,7 @@ class ResNetEvaluator:
     def __init__(self, model):
         self.model = model
 
-    def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig, loadfig=None):
+    def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig, loadfig=False):
         os.makedirs(savefig, exist_ok=True)
         self.model.eval()
         if not loadfig:
@@ -42,7 +42,7 @@ class ResNetEvaluator:
             fig.savefig(os.path.join(savefig, 'fig', '%d.png' %q_pids[i]))
             plt.close(fig)
 
-    def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False, loadfig = None):
+    def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False, loadfig = False):
         if loadfig:
             distmat = np.load(os.path.join(savefig, 'save.npy'))
             q_pids, q_camids = [], []
