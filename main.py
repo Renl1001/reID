@@ -71,7 +71,7 @@ def train(**kwargs):
 
     if opt.evaluate:
         reid_evaluator.evaluate(dataloader['query'], dataloader['gallery'], 
-            dataloader['queryFlip'], dataloader['galleryFlip'], savefig=opt.savefig)
+            dataloader['queryFlip'], dataloader['galleryFlip'], savefig=opt.savefig, loadfig=opt.loadfig)
         return
 
     criterion = get_loss()
