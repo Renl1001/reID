@@ -10,7 +10,7 @@ class ResNetEvaluator:
         self.model = model
 
     def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig, loadfig=False):
-        os.makedirs(savefig, exist_ok=True)
+        os.makedirs(os.path.join(savefig, 'fig'), exist_ok=True)
         self.model.eval()
         if not loadfig:
             np.save(os.path.join(savefig, 'save.npy'), distmat)
