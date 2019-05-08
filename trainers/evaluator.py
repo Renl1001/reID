@@ -14,6 +14,7 @@ class ResNetEvaluator:
         self.model.eval()
         if not loadfig:
             np.save(os.path.join(savefig, 'save.npy'), distmat)
+            print('save acc')
         m = distmat.shape[0]
         indices = np.argsort(distmat, axis=1)
         for i in range(m):
@@ -117,7 +118,7 @@ class ResNetEvaluator:
         if savefig:
             print("Saving fingure")
             self.save_incorrect_pairs(distmat.numpy(), queryloader, galleryloader, 
-                g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig)
+                g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig, loadfig)
 
         print("Computing CMC and mAP")
         cmc, mAP = self.eval_func_gpu(distmat, q_pids, g_pids, q_camids, g_camids)
