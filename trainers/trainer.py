@@ -10,7 +10,7 @@ from utils.loss import euclidean_dist, hard_example_mining
 from utils.meters import AverageMeter
 
 
-class cls_tripletTrainer:
+class Trainer:
     def __init__(self, opt, model, optimzier, criterion, summary_writer):
         self.opt = opt
         self.model = model

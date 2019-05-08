@@ -1,3 +1,4 @@
 data/
 pytorch-ckpt/
 .vscode/
+*.pyc

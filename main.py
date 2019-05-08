@@ -14,11 +14,11 @@ from torch.utils.data import DataLoader
 from config import opt
 from datasets import data_manager
 from datasets.data_loader import ImageData
-from datasets.samplers import RandomIdentitySampler, RandomIdentitySampler_alignedreid
+from datasets.samplers import RandomIdentitySampler
 from torchvision.datasets import ImageFolder
 from models.networks import ResNetBuilder
 from trainers.evaluator import ResNetEvaluator
-from trainers.trainer import cls_tripletTrainer
+from trainers.trainer import Trainer
 from utils.loss import TripletLoss
 from utils.serialization import Logger, save_checkpoint
 from utils.transforms import TestTransform, TrainTransform
@@ -57,11 +57,8 @@ def train(**kwargs):
     elif opt.loss == 'triplet':
         model = ResNetBuilder(None, opt.last_stride, True)
     
-
     if opt.pretrained_model:
         state_dict = torch.load(opt.pretrained_model)['state_dict']
-        #state_dict = {k: v for k, v in state_dict.items() \
-        #        if not ('reduction' in k or 'softmax' in k)}
         model.load_state_dict(state_dict, False)
         print('load pretrained model ' + opt.pretrained_model)
         
@@ -80,8 +77,7 @@ def train(**kwargs):
     criterion = get_loss()
     
 
-    # get optimizer
-    
+    # optimizer
     if opt.optim == "sgd":
         optimizer = torch.optim.SGD(optim_policy, lr=opt.lr, momentum=0.9, weight_decay=5e-4)
     else:
@@ -92,7 +88,7 @@ def train(**kwargs):
 
     start_epoch = opt.start_epoch
     # get trainer and evaluator
-    reid_trainer = cls_tripletTrainer(opt, model, optimizer, criterion, summary_writer)
+    reid_trainer = Trainer(opt, model, optimizer, criterion, summary_writer)
 
 
     # start training
@@ -138,11 +134,10 @@ def get_loss():
 
 def load_data(dataset, pin_memory):
     dataloader = {}
-    if opt.alignedreid:
+    if opt.loss=='softmax':
         trainloader = DataLoader(
             ImageData(dataset.train, TrainTransform()),
-            # sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
-            sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
+            shuffle=True,
             batch_size=opt.train_batch, num_workers=8,
             pin_memory=pin_memory, drop_last=True
         )
@@ -150,7 +145,6 @@ def load_data(dataset, pin_memory):
         trainloader = DataLoader(
             ImageData(dataset.train, TrainTransform()),
             sampler=RandomIdentitySampler(dataset.train, opt.train_batch, opt.num_instances),
-            # sampler = RandomIdentitySampler_alignedreid(dataset.train, opt.num_instances),
             batch_size=opt.train_batch, num_workers=8,
             pin_memory=pin_memory, drop_last=True
         )

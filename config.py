@@ -10,7 +10,6 @@ class DefaultConfig(object):
     dataset = 'market1501'
     use_all = False
     data_aug = 'RandomErase'
-    alignedreid = False
     # optimization options
     loss = 'softmax'  # triplet, softmax_triplet
     optim = 'Adam'
@@ -19,7 +18,7 @@ class DefaultConfig(object):
     test_batch = 64
     warmup = False # warmup
     lr = 0.00035
-    margin = None # 0.3
+    margin = 0.3
     num_instances = 4
     num_gpu = 1
     evaluate = False
