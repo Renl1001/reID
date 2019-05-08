@@ -9,12 +9,15 @@ class ResNetEvaluator:
     def __init__(self, model):
         self.model = model
 
-    def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig, loadfig=False):
+    def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig):
         os.makedirs(os.path.join(savefig, 'fig'), exist_ok=True)
         self.model.eval()
-        if not loadfig:
-            np.save(os.path.join(savefig, 'save.npy'), distmat)
-            print('save acc')
+        np.save(os.path.join(savefig, 'distmat.npy'), distmat)
+        np.save(os.path.join(savefig, 'q_pids.npy'), q_pids)
+        np.save(os.path.join(savefig, 'g_pids.npy'), g_pids)
+        np.save(os.path.join(savefig, 'q_camids.npy'), q_camids)
+        np.save(os.path.join(savefig, 'g_camids.npy'), g_camids)
+        print('save acc')
         m = distmat.shape[0]
         indices = np.argsort(distmat, axis=1)
         for i in range(m):
@@ -42,84 +45,98 @@ class ResNetEvaluator:
             fig.savefig(os.path.join(savefig, 'fig', '%d.png' %q_pids[i]))
             plt.close(fig)
 
-    def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False, loadfig = False):
-        if loadfig:
-            print('loading...')
-            distmat = np.load(os.path.join(savefig, 'save.npy'))
-            q_pids, q_camids = [], []
-            for inputs0, inputs1 in zip(queryloader, queryFliploader):
-                _, pids, camids = self._parse_data(inputs0)
-                if eval_flip:
-                    _, pids, camids = self._parse_data(inputs1)
+    def test(self, queryloader, galleryloader, savefig, i):
+        print('loading...')
+        distmat = np.load(os.path.join(savefig, 'save.npy'))
+        print('load q')
+        q_pids = np.load(os.path.join(savefig, 'q_pids.npy'))
+        q_camids = np.load(os.path.join(savefig, 'q_camids.npy'))
+        
+        print('load g')
+        g_pids = np.load(os.path.join(savefig, 'g_pids.npy'))
+        g_camids = np.load(os.path.join(savefig, 'g_camids.npy'))
+            
+        print('load acc')
 
-                q_pids.extend(pids)
-                q_camids.extend(camids)
-            q_pids = torch.Tensor(q_pids)
-            q_camids = torch.Tensor(q_camids)
+        indices = np.argsort(distmat, axis=1)
+        # for j in range(10):
+        #     index = indices[i][j]
+        #     if g_camids[index] == q_camids[i] and g_pids[index] == q_pids[i]:
+        #         continue
+        #     else:
+        #         break
+        # if g_pids[index] == q_pids[i]:
+        #     continue
+        fig, axes = plt.subplots(1, 11, figsize=(12, 8))
+        img = queryloader.dataset.dataset[i][0]
+        img = Image.open(img).convert('RGB')
+        axes[0].set_title(q_pids[i])
+        axes[0].imshow(img)
+        axes[0].set_axis_off()
+        for j in range(10):
+            gallery_index = indices[i][j]
+            img = galleryloader.dataset.dataset[gallery_index][0]
+            img = Image.open(img).convert('RGB')
+            axes[j+1].set_title(g_pids[gallery_index])
+            axes[j+1].set_axis_off()
+            axes[j+1].imshow(img)
+        fig.savefig(os.path.join(savefig, '%d.png' % q_pids[i]))
+        plt.close(fig)
 
-            g_pids, g_camids = [], []
-            for inputs0, inputs1 in zip(galleryloader, galleryFliploader):
-                _, pids, camids = self._parse_data(inputs0)
-                    
-                g_pids.extend(pids)
-                g_camids.extend(camids)
-            g_pids = torch.Tensor(g_pids)
-            g_camids = torch.Tensor(g_camids)
-            print('111')
-        else:
-            self.model.eval()
-            qf, q_pids, q_camids = [], [], []
-            for inputs0, inputs1 in zip(queryloader, queryFliploader):
-                inputs, pids, camids = self._parse_data(inputs0)
-                feature0 = self._forward(inputs)
-                if eval_flip:
-                    inputs, pids, camids = self._parse_data(inputs1)
-                    feature1 = self._forward(inputs)
-                    qf.append((feature0 + feature1) / 2.0)
-                else:
-                    qf.append(feature0)
+    def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False):
+        
+        self.model.eval()
+        qf, q_pids, q_camids = [], [], []
+        for inputs0, inputs1 in zip(queryloader, queryFliploader):
+            inputs, pids, camids = self._parse_data(inputs0)
+            feature0 = self._forward(inputs)
+            if eval_flip:
+                inputs, pids, camids = self._parse_data(inputs1)
+                feature1 = self._forward(inputs)
+                qf.append((feature0 + feature1) / 2.0)
+            else:
+                qf.append(feature0)
 
-                q_pids.extend(pids)
-                q_camids.extend(camids)
-            qf = torch.cat(qf, 0)
-            q_pids = torch.Tensor(q_pids)
-            q_camids = torch.Tensor(q_camids)
+            q_pids.extend(pids)
+            q_camids.extend(camids)
+        qf = torch.cat(qf, 0)
+        q_pids = torch.Tensor(q_pids)
+        q_camids = torch.Tensor(q_camids)
 
-            print("Extracted features for query set: {} x {}".format(qf.size(0), qf.size(1)))
+        print("Extracted features for query set: {} x {}".format(qf.size(0), qf.size(1)))
 
-            gf, g_pids, g_camids = [], [], []
-            for inputs0, inputs1 in zip(galleryloader, galleryFliploader):
-                inputs, pids, camids = self._parse_data(inputs0)
-                feature0 = self._forward(inputs)
-                if eval_flip:
-                    inputs, pids, camids = self._parse_data(inputs1)
-                    feature1 = self._forward(inputs)
-                    gf.append((feature0 + feature1) / 2.0)
-                else:
-                    gf.append(feature0)
-                    
-                g_pids.extend(pids)
-                g_camids.extend(camids)
-            gf = torch.cat(gf, 0)
-            g_pids = torch.Tensor(g_pids)
-            g_camids = torch.Tensor(g_camids)
+        gf, g_pids, g_camids = [], [], []
+        for inputs0, inputs1 in zip(galleryloader, galleryFliploader):
+            inputs, pids, camids = self._parse_data(inputs0)
+            feature0 = self._forward(inputs)
+            if eval_flip:
+                inputs, pids, camids = self._parse_data(inputs1)
+                feature1 = self._forward(inputs)
+                gf.append((feature0 + feature1) / 2.0)
+            else:
+                gf.append(feature0)
+                
+            g_pids.extend(pids)
+            g_camids.extend(camids)
+        gf = torch.cat(gf, 0)
+        g_pids = torch.Tensor(g_pids)
+        g_camids = torch.Tensor(g_camids)
 
-            print("Extracted features for gallery set: {} x {}".format(gf.size(0), gf.size(1)))
+        print("Extracted features for gallery set: {} x {}".format(gf.size(0), gf.size(1)))
 
-            print("Computing distance matrix")
+        print("Computing distance matrix")
 
-            m, n = qf.size(0), gf.size(0)
-            q_g_dist = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
-                torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
-            q_g_dist.addmm_(1, -2, qf, gf.t())
+        m, n = qf.size(0), gf.size(0)
+        q_g_dist = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
+            torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+        q_g_dist.addmm_(1, -2, qf, gf.t())
 
-            distmat = q_g_dist 
-            distmat = distmat.numpy()
+        distmat = q_g_dist 
 
         if savefig:
             print("Saving fingure")
-            self.save_incorrect_pairs(distmat, queryloader, galleryloader, 
-                g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig, loadfig)
+            self.save_incorrect_pairs(distmat.numpy(), queryloader, galleryloader, 
+                g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig)
 
         print("Computing CMC and mAP")
         cmc, mAP = self.eval_func_gpu(distmat, q_pids, g_pids, q_camids, g_camids)

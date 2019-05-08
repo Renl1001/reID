@@ -71,7 +71,7 @@ def train(**kwargs):
 
     if opt.evaluate:
         reid_evaluator.evaluate(dataloader['query'], dataloader['gallery'], 
-            dataloader['queryFlip'], dataloader['galleryFlip'], savefig=opt.savefig, loadfig=opt.loadfig)
+            dataloader['queryFlip'], dataloader['galleryFlip'], savefig=opt.savefig)
         return
 
     criterion = get_loss()
@@ -116,6 +116,51 @@ def train(**kwargs):
                 filename='checkpoint_ep' + str(epoch + 1) + '.pth.tar')
 
     print('Best rank-1 {:.1%}, achived at epoch {}'.format(best_rank1, best_epoch))
+
+def test(**kwargs):
+    opt._parse(kwargs)
+
+    os.makedirs(opt.save_dir, exist_ok=True)
+    use_gpu = torch.cuda.is_available()
+    sys.stdout = Logger(osp.join(opt.save_dir, 'log_train.txt'))
+
+    print('=========user config==========')
+    pprint(opt._state_dict())
+    print('============end===============')
+
+    if use_gpu:
+        print('currently using GPU')
+        cudnn.benchmark = True
+        torch.cuda.manual_seed_all(opt.seed)
+    else:
+        print('currently using cpu')
+
+    print('initializing dataset {}'.format(opt.dataset))
+    dataset = data_manager.init_dataset(name=opt.dataset, use_all = opt.use_all)
+
+    # load data
+    pin_memory = True if use_gpu else False
+    dataloader = load_data(dataset, pin_memory)
+
+    print('initializing model ...')
+    if opt.loss == 'softmax' or opt.loss == 'softmax_triplet':
+        model = ResNetBuilder(dataset.num_train_pids, opt.last_stride, True)
+    elif opt.loss == 'triplet':
+        model = ResNetBuilder(None, opt.last_stride, True)
+    
+    if opt.pretrained_model:
+        state_dict = torch.load(opt.pretrained_model)['state_dict']
+        model.load_state_dict(state_dict, False)
+        print('load pretrained model ' + opt.pretrained_model)
+        
+    print('model size: {:.5f}M'.format(sum(p.numel() for p in model.parameters()) / 1e6))
+
+    if use_gpu:
+        model = nn.DataParallel(model).cuda()
+    reid_evaluator = ResNetEvaluator(model)
+
+    reid_evaluator.test(dataloader['query'], dataloader['gallery'], savefig=opt.savefig, i=opt.findid)
+    return
 
 def get_loss():
     xent_criterion = nn.CrossEntropyLoss()

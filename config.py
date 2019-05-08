@@ -25,7 +25,7 @@ class DefaultConfig(object):
     # eval
     evaluate = False
     savefig = None #./save 
-    loadfig = None #
+    findid = None
 
     # model options
     last_stride = 1
