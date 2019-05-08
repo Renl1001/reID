@@ -73,12 +73,8 @@ class ResNetEvaluator:
         axes[0].set_title(q_pids[i])
         axes[0].imshow(img)
         axes[0].set_axis_off()
-        j = 0
-        for k in range(10):
+        for j in range(10):
             gallery_index = indices[i][j]
-            j+=1
-            if(g_camids[gallery_index] == q_camids[i]):
-                k-=1
             img = galleryloader.dataset.dataset[gallery_index][0]
             img = Image.open(img).convert('RGB')
             axes[k+1].set_title(g_pids[gallery_index])
