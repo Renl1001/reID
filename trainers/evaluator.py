@@ -45,43 +45,91 @@ class ResNetEvaluator:
             fig.savefig(os.path.join(savefig, 'fig', '%d.png' %q_pids[i]))
             plt.close(fig)
 
-    def test(self, queryloader, galleryloader, savefig, i):
-        print('loading...')
-        distmat = np.load(os.path.join(savefig, 'distmat.npy'))
-        print('load q')
-        q_pids = np.load(os.path.join(savefig, 'q_pids.npy'))
-        q_camids = np.load(os.path.join(savefig, 'q_camids.npy'))
-        
-        print('load g')
-        g_pids = np.load(os.path.join(savefig, 'g_pids.npy'))
-        g_camids = np.load(os.path.join(savefig, 'g_camids.npy'))
-            
-        print('load acc')
+    def test(self, queryloader, galleryloader, savefig, i, saveG = False):
 
-        indices = np.argsort(distmat, axis=1)
-        # for j in range(10):
-        #     index = indices[i][j]
-        #     if g_camids[index] == q_camids[i] and g_pids[index] == q_pids[i]:
-        #         continue
-        #     else:
-        #         break
-        # if g_pids[index] == q_pids[i]:
-        #     continue
-        fig, axes = plt.subplots(1, 11, figsize=(12, 8))
-        img = queryloader.dataset.dataset[i][0]
-        img = Image.open(img).convert('RGB')
-        axes[0].set_title(q_pids[i])
-        axes[0].imshow(img)
-        axes[0].set_axis_off()
-        for j in range(10):
-            gallery_index = indices[i][j]
-            img = galleryloader.dataset.dataset[gallery_index][0]
+        if saveG:
+            self.model.eval()
+
+            gf, g_pids, g_camids = [], [], []
+            for inputs0 in galleryloader:
+                inputs, pids, camids = self._parse_data(inputs0)
+                feature0 = self._forward(inputs)
+                
+                gf.append(feature0)
+                    
+                g_pids.extend(pids)
+                g_camids.extend(camids)
+            gf = torch.cat(gf, 0)
+            g_pids = torch.Tensor(g_pids)
+            g_camids = torch.Tensor(g_camids)
+            print('last: -------------------------')
+            # print(gf.shape())
+            for i in range(3):
+                print(gf[i])
+                print(g_pids[i])
+
+            np.save(os.path.join('save', 'feature', 'gf.npy'), gf.numpy())
+            np.save(os.path.join('save', 'feature', 'g_pids.npy'), g_pids.numpy())
+            np.save(os.path.join('save', 'feature', 'g_camids.npy'), g_camids.numpy())
+
+            gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
+            g_pids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_pids.npy')))
+            g_camids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_camids.npy')))
+            print('new: -------------------------')
+            # print(gf.shape())
+            for i in range(3):
+                print(gf[i])
+                print(g_pids[i])
+
+            # print("Extracted features for gallery set: {} x {}".format(gf.size(0), gf.size(1)))
+            # m, n = qf.size(0), gf.size(0)
+            # q_g_dist = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
+            #     torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+            # q_g_dist.addmm_(1, -2, qf, gf.t())
+
+            # distmat = q_g_dist
+
+            
+            # print("Saving fingure")
+            # self.save_incorrect_pairs(distmat.numpy(), queryloader, galleryloader, 
+            #     g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig)
+        else:
+            print('loading...')
+            distmat = np.load(os.path.join(savefig, 'distmat.npy'))
+            print('load q')
+            q_pids = np.load(os.path.join(savefig, 'q_pids.npy'))
+            q_camids = np.load(os.path.join(savefig, 'q_camids.npy'))
+            
+            print('load g')
+            g_pids = np.load(os.path.join(savefig, 'g_pids.npy'))
+            g_camids = np.load(os.path.join(savefig, 'g_camids.npy'))
+                
+            print('load acc')
+
+            indices = np.argsort(distmat, axis=1)
+            # for j in range(10):
+            #     index = indices[i][j]
+            #     if g_camids[index] == q_camids[i] and g_pids[index] == q_pids[i]:
+            #         continue
+            #     else:
+            #         break
+            # if g_pids[index] == q_pids[i]:
+            #     continue
+            fig, axes = plt.subplots(1, 11, figsize=(12, 8))
+            img = queryloader.dataset.dataset[i][0]
             img = Image.open(img).convert('RGB')
-            axes[j+1].set_title(g_pids[gallery_index])
-            axes[j+1].set_axis_off()
-            axes[j+1].imshow(img)
-        fig.savefig(os.path.join(savefig, '%d.png' % q_pids[i]))
-        plt.close(fig)
+            axes[0].set_title(q_pids[i])
+            axes[0].imshow(img)
+            axes[0].set_axis_off()
+            for j in range(10):
+                gallery_index = indices[i][j]
+                img = galleryloader.dataset.dataset[gallery_index][0]
+                img = Image.open(img).convert('RGB')
+                axes[j+1].set_title(g_pids[gallery_index])
+                axes[j+1].set_axis_off()
+                axes[j+1].imshow(img)
+            fig.savefig(os.path.join(savefig, '%d.png' % q_pids[i]))
+            plt.close(fig)
 
     def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False):
         
@@ -132,6 +180,7 @@ class ResNetEvaluator:
         q_g_dist.addmm_(1, -2, qf, gf.t())
 
         distmat = q_g_dist 
+        distmat = q_g_dist
 
         if savefig:
             print("Saving fingure")

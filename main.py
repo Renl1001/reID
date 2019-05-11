@@ -58,7 +58,11 @@ def train(**kwargs):
         model = ResNetBuilder(None, opt.last_stride, True)
     
     if opt.pretrained_model:
-        state_dict = torch.load(opt.pretrained_model)['state_dict']
+        if use_gpu:
+            state_dict = torch.load(opt.pretrained_model)['state_dict']
+        else:
+            state_dict = torch.load(opt.pretrained_model, map_location='cpu')['state_dict']
+            
         model.load_state_dict(state_dict, False)
         print('load pretrained model ' + opt.pretrained_model)
         
@@ -141,6 +145,8 @@ def test(**kwargs):
     # load data
     pin_memory = True if use_gpu else False
     dataloader = load_data(dataset, pin_memory)
+    print('111')
+    print(dataloader['query'].dataset.dataset[0][0])
 
     print('initializing model ...')
     if opt.loss == 'softmax' or opt.loss == 'softmax_triplet':
@@ -149,7 +155,10 @@ def test(**kwargs):
         model = ResNetBuilder(None, opt.last_stride, True)
     
     if opt.pretrained_model:
-        state_dict = torch.load(opt.pretrained_model)['state_dict']
+        if use_gpu:
+            state_dict = torch.load(opt.pretrained_model)['state_dict']
+        else:
+            state_dict = torch.load(opt.pretrained_model, map_location='cpu')['state_dict']
         model.load_state_dict(state_dict, False)
         print('load pretrained model ' + opt.pretrained_model)
         
@@ -159,7 +168,7 @@ def test(**kwargs):
         model = nn.DataParallel(model).cuda()
     reid_evaluator = ResNetEvaluator(model)
 
-    reid_evaluator.test(dataloader['query'], dataloader['gallery'], savefig=opt.savefig, i=opt.findid)
+    reid_evaluator.test(dataloader['query'], dataloader['gallery'], savefig=opt.savefig, i=opt.findid, saveG=True)
     return
 
 def get_loss():
