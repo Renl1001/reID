@@ -6,3 +6,5 @@ Web/
 *.npy
 *.cpython-37.pyc
 *.pyc
+*.csv
+*.png

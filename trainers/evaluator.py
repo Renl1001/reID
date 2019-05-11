@@ -2,8 +2,10 @@
 import numpy as np
 import os
 import torch
+import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+from utils.transforms import TestTransform
 
 class ResNetEvaluator:
     def __init__(self, model):
@@ -45,40 +47,68 @@ class ResNetEvaluator:
             fig.savefig(os.path.join(savefig, 'fig', '%d.png' %q_pids[i]))
             plt.close(fig)
 
+    def read_image(self, img_path):
+        got_img = False
+        while not got_img:
+            try:
+                img = Image.open(img_path).convert('RGB')
+                got_img = True
+            except IOError:
+                print("IOError incurred when reading '{}'. Will redo. Don't worry. Just chill.".format(img_path))
+                pass
+        return img
+
     def test(self, queryloader, galleryloader, savefig, i, saveG = False):
 
         if saveG:
             self.model.eval()
 
-            gf, g_pids, g_camids = [], [], []
-            for inputs0 in galleryloader:
-                inputs, pids, camids = self._parse_data(inputs0)
-                feature0 = self._forward(inputs)
+            gf, g_pids, g_camids, g_path = [], [], [], []
+            # for i, inputs0 in enumerate(galleryloader) :
+            #     inputs, pids, camids = self._parse_data(inputs0)
+            #     # feature0 = self._forward(inputs)
                 
-                gf.append(feature0)
+            #     # gf.append(feature0)
                     
-                g_pids.extend(pids)
-                g_camids.extend(camids)
-            gf = torch.cat(gf, 0)
-            g_pids = torch.Tensor(g_pids)
-            g_camids = torch.Tensor(g_camids)
+            #     g_pids.extend(pids)
+            #     g_camids.extend(camids)
+            
+            for gpath in galleryloader.dataset.dataset:
+                gpath, gpid, gcamid = gpath
+                g_path.append(gpath)
+                g_pids.append(gpid)
+                g_camids.append(gcamid)
+            # gf = torch.cat(gf, 0)
+            
+            data = {"g_path":g_path,"g_pids":g_pids,"g_camids":g_camids}
+            df = pd.DataFrame(data)
+
+            # g_pids = torch.Tensor(g_pids)
+            # g_camids = torch.Tensor(g_camids)
+            # g_path = torch.Tensor(g_path)
+            
             print('last: -------------------------')
             # print(gf.shape())
             for i in range(3):
-                print(gf[i])
+                print(g_path[i])
                 print(g_pids[i])
 
-            np.save(os.path.join('save', 'feature', 'gf.npy'), gf.numpy())
-            np.save(os.path.join('save', 'feature', 'g_pids.npy'), g_pids.numpy())
-            np.save(os.path.join('save', 'feature', 'g_camids.npy'), g_camids.numpy())
+            # np.save(os.path.join('save', 'feature', 'gf.npy'), gf.numpy())
+            # np.save(os.path.join('save', 'feature', 'g_pids.npy'), g_pids.numpy())
+            # np.save(os.path.join('save', 'feature', 'g_camids.npy'), g_camids.numpy())
+            # np.save(os.path.join('save', 'feature', 'g_path.npy'), g_path.numpy())
 
-            gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
-            g_pids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_pids.npy')))
-            g_camids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_camids.npy')))
-            print('new: -------------------------')
-            # print(gf.shape())
+            df.to_csv(os.path.join('save', 'feature', 'g_data.csv'))
+
+            df = pd.read_csv(os.path.join('save', 'feature', 'g_data.csv'))
+            # gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
+            g_pids = df['g_pids'].tolist()
+            g_camids = df['g_camids'].tolist()
+            g_path = df['g_path'].tolist()
+            # print('new: -------------------------')
+            # # print(gf.shape())
             for i in range(3):
-                print(gf[i])
+                print(g_path[i])
                 print(g_pids[i])
 
             # print("Extracted features for gallery set: {} x {}".format(gf.size(0), gf.size(1)))
@@ -94,17 +124,46 @@ class ResNetEvaluator:
             # self.save_incorrect_pairs(distmat.numpy(), queryloader, galleryloader, 
             #     g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig)
         else:
-            print('loading...')
-            distmat = np.load(os.path.join(savefig, 'distmat.npy'))
-            print('load q')
-            q_pids = np.load(os.path.join(savefig, 'q_pids.npy'))
-            q_camids = np.load(os.path.join(savefig, 'q_camids.npy'))
+            gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
+            g_pids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_pids.npy')))
+            g_camids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_camids.npy')))
+            self.model.eval()
+
+            path = 'data/market1501/query/1497_c5s3_062640_00.jpg'
+            qf, q_pids, q_camids = [], [], []
             
-            print('load g')
-            g_pids = np.load(os.path.join(savefig, 'g_pids.npy'))
-            g_camids = np.load(os.path.join(savefig, 'g_camids.npy'))
-                
+            inputs = self.read_image(path)
+            transform = TestTransform()
+            inputs = transform(inputs)
+            inputs = inputs.reshape(-1,3,256,128)
+
+            feature0 = self._forward(inputs)
+            
+            qf = feature0
+            
+            q_pids = [1497]
+            q_camids = [5]
+
+            qf = torch.Tensor(qf)
+            q_pids = torch.Tensor(q_pids)
+            q_camids = torch.Tensor(q_camids)
+
+            print(q_pids)
+
+            print("Extracted features for gallery set: {} x {}".format(gf.size(0), gf.size(1)))
+            m, n = qf.size(0), gf.size(0)
+            q_g_dist = torch.pow(qf, 2).sum().expand(m, n) + \
+                torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+            q_g_dist.addmm_(1, -2, qf, gf.t())
             print('load acc')
+
+            distmat = q_g_dist
+
+            distmat = distmat.numpy()
+            q_pids = q_pids.numpy()
+            q_camids = q_camids.numpy()
+            g_pids = g_pids.numpy()
+            g_camids = g_camids.numpy()
 
             indices = np.argsort(distmat, axis=1)
             # for j in range(10):
@@ -116,19 +175,19 @@ class ResNetEvaluator:
             # if g_pids[index] == q_pids[i]:
             #     continue
             fig, axes = plt.subplots(1, 11, figsize=(12, 8))
-            img = queryloader.dataset.dataset[i][0]
+            img = path
             img = Image.open(img).convert('RGB')
-            axes[0].set_title(q_pids[i])
+            axes[0].set_title(q_pids)
             axes[0].imshow(img)
             axes[0].set_axis_off()
             for j in range(10):
-                gallery_index = indices[i][j]
+                gallery_index = indices[0][j]
                 img = galleryloader.dataset.dataset[gallery_index][0]
                 img = Image.open(img).convert('RGB')
                 axes[j+1].set_title(g_pids[gallery_index])
                 axes[j+1].set_axis_off()
                 axes[j+1].imshow(img)
-            fig.savefig(os.path.join(savefig, '%d.png' % q_pids[i]))
+            fig.savefig(os.path.join(savefig, '%d.png' % q_pids))
             plt.close(fig)
 
     def evaluate(self, queryloader, galleryloader, queryFliploader, galleryFliploader, ranks=[1, 2, 4, 5, 8, 10, 16, 20], eval_flip=False, savefig=False):
