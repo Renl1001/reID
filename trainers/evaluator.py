@@ -180,7 +180,6 @@ class ResNetEvaluator:
         q_g_dist.addmm_(1, -2, qf, gf.t())
 
         distmat = q_g_dist 
-        distmat = q_g_dist
 
         if savefig:
             print("Saving fingure")
