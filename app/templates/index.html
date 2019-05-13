@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>行人重识别</title>
+<link rel="shortcut icon" href="{{ url_for('static', filename='images/ico.ico') }}" type="image/x-icon" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+
+<body>
+   <header>
+	 <div class="mainbox">
+	   <div class="bg" ></div>
+		<ul>
+			<li><a href="{{ url_for('index') }}">首页</a></li>
+			<li><a href="{{ url_for('facelib') }}">行人图库</a></li>
+			<li><a href="{{ url_for('facercg') }}">行人重识别</a></li>
+			<li><a href="{{ url_for('about') }}">关于</a></li>
+		</ul>
+
+		<div class="banner">
+			 <h1>行 人 重 识 别</h1>
+			 <p>上传一张行人图片，找到图库中其他该行人的图片</p>
+		   <a href="{{ url_for('facercg') }}">立即体验</a>
+		</div>
+	 </div>
+  </header>
+</body>
+</html>

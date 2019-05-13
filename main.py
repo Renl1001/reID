@@ -168,7 +168,7 @@ def test(**kwargs):
         model = nn.DataParallel(model).cuda()
     reid_evaluator = ResNetEvaluator(model)
 
-    reid_evaluator.test(dataloader['query'], dataloader['gallery'], savefig=opt.savefig, i=opt.findid, saveG=True)
+    reid_evaluator.test(dataloader['query'], dataloader['gallery'], savefig=opt.savefig, i=opt.findid)
     return
 
 def get_loss():

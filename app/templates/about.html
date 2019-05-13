@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>行人重识别</title>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='images/ico.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/about.css') }}">
+</head>
+
+<body>
+  <header>
+    <div class="mainbox">
+      <ul>
+        <li><a href="{{ url_for('index') }}">首页</a></li>
+        <li><a href="{{ url_for('facelib') }}">行人图库</a></li>
+        <li><a href="{{ url_for('facercg') }}">行人重识别</a></li>
+        <li><a href="{{ url_for('about') }}">关于</a></li>
+      </ul>
+    </div>
+  </header>
+  <div class="mainbox">
+    <div class="member">
+      <img src="{{ url_for('static', filename='images/photo1.jpg') }}" alt="">
+      <h3>行人重识别简介</h3>
+      <p>行人重识别（Person Re-Identification），也叫行人再识别，它是指在不同的摄像头（可能相互之间没有监控区域重叠）对指定的某一个目标行人进行相似度匹配的一个过程，也就是给定了一个摄像头下的一个行人作为目标，然后在其他多个不同的摄像机在不同的时间拍到的视频中来找到该目标。图中包含两个摄像头。行人重识别涉及到了机器学习、深度学习、卷积神经网络、模式识别与图像处理等多个领域的知识。在实际的应用中，行人重识别仍然存在许多的问题和挑战。实际生活中的摄像头的分辨率不一，还有很多的分辨率较低，拍摄得到的行人图片的画质也会相对较差，需要解决如何处理分辨率低的图像以及与不同的分辨率的图像做对比提取出有鲁棒性的行人特征；摄像头分布的位置不一，使得拍摄到的图像中行人大小也不一样，大概率会有一定程度上的遮挡，需要解决遮挡物的干扰，从有限的图像中获取到细节特征；除此之外，还需要考虑到拍摄环境，角度的问题，行人的姿态角度以及光照都会对重识别造成影响。行人重识别的研究有实际应用价值和意义，也极具挑战性，所以开展行人重识别的研究有非常重要的意义。</p>
+    </div>
+  </div>
+</body>
+
+</html>

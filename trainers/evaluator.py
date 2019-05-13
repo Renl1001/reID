@@ -14,12 +14,6 @@ class ResNetEvaluator:
     def save_incorrect_pairs(self, distmat, queryloader, galleryloader, g_pids, q_pids, g_camids, q_camids, savefig):
         os.makedirs(os.path.join(savefig, 'fig'), exist_ok=True)
         self.model.eval()
-        np.save(os.path.join(savefig, 'distmat.npy'), distmat)
-        np.save(os.path.join(savefig, 'q_pids.npy'), q_pids)
-        np.save(os.path.join(savefig, 'g_pids.npy'), g_pids)
-        np.save(os.path.join(savefig, 'q_camids.npy'), q_camids)
-        np.save(os.path.join(savefig, 'g_camids.npy'), g_camids)
-        print('save acc')
         m = distmat.shape[0]
         indices = np.argsort(distmat, axis=1)
         for i in range(m):
@@ -125,11 +119,16 @@ class ResNetEvaluator:
             #     g_pids.numpy(), q_pids.numpy(), g_camids.numpy(), q_camids.numpy(), savefig)
         else:
             gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
-            g_pids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_pids.npy')))
-            g_camids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_camids.npy')))
+            df = pd.read_csv(os.path.join('save', 'feature', 'g_data.csv'))
+            # gf = torch.Tensor(np.load(os.path.join('save', 'feature', 'gf.npy')))
+            g_pids = df['g_pids'].tolist()
+            g_camids = df['g_camids'].tolist()
+            g_path = df['g_path'].tolist()
+            # g_pids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_pids.npy')))
+            # g_camids = torch.Tensor(np.load(os.path.join('save', 'feature', 'g_camids.npy')))
             self.model.eval()
 
-            path = 'data/market1501/query/1497_c5s3_062640_00.jpg'
+            path = 'data/market1501/query/0009_c1s1_000376_00.jpg'
             qf, q_pids, q_camids = [], [], []
             
             inputs = self.read_image(path)
@@ -141,12 +140,10 @@ class ResNetEvaluator:
             
             qf = feature0
             
-            q_pids = [1497]
-            q_camids = [5]
+            q_pids = 9
+            q_camids = 1
 
             qf = torch.Tensor(qf)
-            q_pids = torch.Tensor(q_pids)
-            q_camids = torch.Tensor(q_camids)
 
             print(q_pids)
 
@@ -160,10 +157,9 @@ class ResNetEvaluator:
             distmat = q_g_dist
 
             distmat = distmat.numpy()
-            q_pids = q_pids.numpy()
-            q_camids = q_camids.numpy()
-            g_pids = g_pids.numpy()
-            g_camids = g_camids.numpy()
+
+            # g_pids = g_pids.numpy()
+            # g_camids = g_camids.numpy()
 
             indices = np.argsort(distmat, axis=1)
             # for j in range(10):
@@ -177,14 +173,16 @@ class ResNetEvaluator:
             fig, axes = plt.subplots(1, 11, figsize=(12, 8))
             img = path
             img = Image.open(img).convert('RGB')
-            axes[0].set_title(q_pids)
+            axes[0].set_title(str(q_pids)+'_'+str(q_camids))
             axes[0].imshow(img)
             axes[0].set_axis_off()
             for j in range(10):
                 gallery_index = indices[0][j]
-                img = galleryloader.dataset.dataset[gallery_index][0]
-                img = Image.open(img).convert('RGB')
-                axes[j+1].set_title(g_pids[gallery_index])
+                # img = galleryloader.dataset.dataset[gallery_index][0]
+                img_path = g_path[gallery_index]
+                print('path:', img_path)
+                img = Image.open(img_path).convert('RGB')
+                axes[j+1].set_title(str(g_pids[gallery_index])+'_'+str(g_camids[gallery_index]+1))
                 axes[j+1].set_axis_off()
                 axes[j+1].imshow(img)
             fig.savefig(os.path.join(savefig, '%d.png' % q_pids))

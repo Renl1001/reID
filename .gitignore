@@ -2,9 +2,7 @@ data/
 pytorch-ckpt/
 .vscode/
 *.pyc
-Web/
 *.npy
-*.cpython-37.pyc
-*.pyc
 *.csv
-*.png
+app/static/images
+app/data/

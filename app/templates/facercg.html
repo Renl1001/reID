@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>行人重识别</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/ico.ico') }}" type="image/x-icon"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/facercg.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loading.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    
+    <script>
+        $(function () {
+            $(".box .list").first().css("display", "block");
+            $(".box .tab a").click(function () {
+                $(".box .tab a").removeClass("active");
+                $(this).addClass("active");
+
+                $(".box").find(".list").removeClass("show");
+                $(".box").find(".list").eq($(this).index()).addClass("show");
+            });
+
+            $(".showbox").click(function () {
+                $(this).toggleClass("hi");
+                $(".menu").toggle();
+            })
+
+        })
+    </script>
+
+
+</head>
+
+<body>
+<header>
+    <div class="mainbox">
+        <ul>
+            <li><a href="{{ url_for('index') }}">首页</a></li>
+            <li><a href="{{ url_for('facelib') }}">行人图库</a></li>
+            <li><a href="{{ url_for('facercg') }}">行人重识别</a></li>
+            <li><a href="{{ url_for('about') }}">关于</a></li>
+        </ul>
+    </div>
+</header>
+
+
+{% if message %}
+    <script>
+        alert("{{ message }}");
+    </script>
+{% endif %}
+
+
+<div class="mainbox">
+    <h3>行人重识别</h3>
+    <p style="font-size: 16px">基于深度学习的行人重识别简单demo，上传本地图片，程序会根据已有的行人图像库识别上传的行人。</p>
+</div>
+
+<div class="mainbox">
+    <div class="upload">
+        <div id="result" class="re">
+            {% if left_photo_path %}
+                <img src="{{ left_photo_path }} " style="width: 128px;height: 256px;max-width: 100%;max-height: 100%;">
+            {% else %}
+                <img src="../static/images/loading.gif"
+                     style="width: 133px;height: 133px;padding-left: 0;">
+            {% endif %}
+        </div>
+        <form method="post" action="/facercg" enctype="multipart/form-data">
+            <div class="row">
+                <a href=" " style="width: 90px;height: 30px; font-size: 16px">选择图片<input id="pic" type="file" name="file" value="上传"
+                        accept="" onchange="selectFile()" /></a>
+                <!-- <button type="submit" id="delivery" class="btn btn-success">上传图片</button> -->
+
+                <a href=" " style="width: 90px;height: 30px; font-size: 16px">上传图片<input type="submit" id="delivery" value="上传"
+                        style="margin-left: 295px;padding-left: 25px;padding-right: 27px;padding-top: 4px;padding-bottom: 7px" /></a>
+            </div>
+        </form>
+
+        <div class="select">
+            <span>预测结果：</span><span>{{ result }}</span><br/>
+        </div>
+    </div>
+
+    <div class="box">
+        <div class="tab">
+            <a href="javascript:" class="active" style="font-size: 18px">识别结果</a>
+        </div>
+        <div class="con">
+            <div class="list show">
+                {% if unknown_show %}
+                    <img src="{{ url_for('static', filename='images/unknown.jpg') }}" class="unknown">
+                {% endif %}
+
+                {% if image_paths %}
+                    {% for data in datas %}
+                        <img src="{{ data[0] }}" alt="" title="图片信息" class="picture" title="Header" data-toggle="popover" data-trigger="hover" data-content="行人编号：{{ data[1] }}<br/>相机编号：{{ data[2] }}<br />录像片段编号：{{ data[3] }}<br />在片段中的时间：{{ data[4] }}s" data-html="true">
+                    {% endfor %}
+                {% elif not unknown_show %}
+                    <img src="{{ url_for('static', filename='images/unknown.jpg') }}" class="unknown">
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<footer></footer>
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="popover"]').popover();
+    });
+</script>
+</body>
+</html>
