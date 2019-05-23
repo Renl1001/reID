@@ -12,8 +12,6 @@ import pandas as pd
 
 # 用户上传图片的保存路径
 SAVE_DIR = "app/static/images/unknown"
-# 已知人像库的路径
-FACELIB_DIR = "static/images/known"
 # 允许用户上传的文件格式
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -22,7 +20,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 # app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = '/Faces/unknown'
 app.config['MAX_CONTEN T_LENGTH'] = 5 * 1024 * 1024
 
 def get_current_time():
@@ -35,8 +32,8 @@ def index():
     return render_template('index.html')
 
 # 用户访问人脸库时的路由行为
-@app.route('/facelib')
-def facelib():
+@app.route('/personlib')
+def personlib():
     df = pd.read_csv(os.path.join('app', 'data', 'g_data.csv'))
     g_path = df['g_path'].tolist()
     pager_obj = Pagination(request.args.get("page", 1), len(g_path), request.path, request.args, per_page_count=18)
@@ -45,11 +42,11 @@ def facelib():
     index_list = g_path[pager_obj.start:pager_obj.end]
     html = pager_obj.page_html()
     # return render_template("test.html", index_list=index_list, )
-    return render_template('facelib.html', image_infos=index_list, html=html)
+    return render_template('personlib.html', image_infos=index_list, html=html)
 
 # 用户访问人脸识别模块时的路由行为
-@app.route('/facercg', methods=['GET', 'POST'])
-def facercg():
+@app.route('/personrcg', methods=['GET', 'POST'])
+def personrcg():
     # 如果用户提交POST表单
     if request.method == 'POST':
 
@@ -62,7 +59,7 @@ def facercg():
 
         # POST表单中没有文件时 提示用户先选择图片
         if 'file' not in request.files:
-            return render_template('facercg.html', unknown_show=True,
+            return render_template('personrcg.html', unknown_show=True,
                                    similarity=0, result="unknown",
                                    message="请先选择图片")
 
@@ -105,18 +102,18 @@ def facercg():
                 ss.append(wd[1][2:])
                 # seconds.append(wd[2]/25)
                 datas.append((path, wd[0], wd[1][0:2], wd[1][2:], int(wd[2])/25))
-            return render_template('facercg.html', image_paths=image_paths, datas = datas,
+            return render_template('personrcg.html', image_paths=image_paths, datas = datas,
                     left_photo_path=os.path.join('static/images/unknown',file_name),
                     result=result, message="识别成功")
         else:# 文件不合法
             print("[-]图片上传有误")
             left_photo_path = url_for('static', filename='images/loading.gif')
-            return render_template('facercg.html', left_photo_path=left_photo_path,
+            return render_template('personrcg.html', left_photo_path=left_photo_path,
                                    similarity=0, result="unknown", message="图片上传有误")
 
     # 用户向本页面发出GET请求 返回该页面内容
     else:
-        return render_template('facercg.html', unknown_show=True, similarity=0, result="unknown", message=None)
+        return render_template('personrcg.html', unknown_show=True, similarity=0, result="unknown", message=None)
 
 
 # 用户访问"关于我们"页面的路由行为

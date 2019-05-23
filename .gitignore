@@ -1,8 +1,7 @@
+save/
 data/
 pytorch-ckpt/
 .vscode/
-*.pyc
-*.npy
-*.csv
-app/static/images
+app/static/images/market1501
 app/data/
+*.pyc

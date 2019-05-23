@@ -5,7 +5,7 @@
     <title>行人重识别</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/ico.ico') }}" type="image/x-icon"/>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/facercg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/personrcg.css') }}">
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/loading.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -37,8 +37,8 @@
     <div class="mainbox">
         <ul>
             <li><a href="{{ url_for('index') }}">首页</a></li>
-            <li><a href="{{ url_for('facelib') }}">行人图库</a></li>
-            <li><a href="{{ url_for('facercg') }}">行人重识别</a></li>
+            <li><a href="{{ url_for('personlib') }}">行人图库</a></li>
+            <li><a href="{{ url_for('personrcg') }}">行人重识别</a></li>
             <li><a href="{{ url_for('about') }}">关于</a></li>
         </ul>
     </div>
@@ -67,7 +67,7 @@
                      style="width: 133px;height: 133px;padding-left: 0;">
             {% endif %}
         </div>
-        <form method="post" action="/facercg" enctype="multipart/form-data">
+        <form method="post" action="/personrcg" enctype="multipart/form-data">
             <div class="row">
                 <a href=" " style="width: 90px;height: 30px; font-size: 16px">选择图片<input id="pic" type="file" name="file" value="上传"
                         accept="" onchange="selectFile()" /></a>
